@@ -288,13 +288,10 @@
   }
 
   if (heroDiya) {
-    heroDiya.addEventListener('click', kindleDiya);
-    heroDiya.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        kindleDiya(e);
-      }
+    heroDiya.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
     });
+    heroDiya.addEventListener('click', kindleDiya);
   }
 
   /* ================================================================
