@@ -384,48 +384,75 @@
   yesBtn.addEventListener('click', function () { spawnConfetti(); launchRocket(); launchRocket(); });
 
   var no = document.getElementById('rsvp-no'), taunt = document.getElementById('taunt'), acts = document.querySelector('.actions');
-  var lines = ['Oops, it slipped away!', 'Nice try.', 'Alfiya and Risha will be so sad.', 'Think of the mithai.',
-               'Too slow!', 'The diya says no.', 'Not today! Come on...', 'The rangoli is crying.'];
-  var tries = 0, curX = 0, curY = 0, gaveUp = false, justGaveUp = false;
+  var lines = [
+    'Oops, it slipped away! 😜',
+    'Nice try! 😏',
+    'Alfiya & Risha will be so sad! 🥺',
+    'Think of the delicious mithai! 🍬',
+    'Too slow! 🏃‍♂️',
+    'The diya says no skipping! 🪔',
+    'Come on, you know you want to! ✨'
+  ];
+  var tries = 0, gaveUp = false;
 
-  function runAway(px, py) {
+  var dodgePositions = [
+    { x: -75, y: -20 },
+    { x: 80, y: 30 },
+    { x: -85, y: 35 },
+    { x: 75, y: -25 },
+    { x: -90, y: 10 },
+    { x: 85, y: -15 }
+  ];
+
+  function runAway() {
     no.classList.add('dodging');
-    var r = no.getBoundingClientRect(), bL = r.left - curX, bT = r.top - curY;
-    var w = r.width, h = r.height, m = 12;
-    var vw = document.documentElement.clientWidth, vh = window.innerHeight;
-    var box = acts.getBoundingClientRect(), best = null;
-    for (var k = 0; k < 40; k++) {
-      var L = m + Math.random() * Math.max(1, vw - w - 2 * m);
-      var T = m + Math.random() * Math.max(1, vh - h - 2 * m);
-      var onB = L < box.right + 12 && L + w > box.left - 12 && T < box.bottom + 12 && T + h > box.top - 12;
-      var nearP = px != null && Math.hypot(L + w / 2 - px, T + h / 2 - py) < 160;
-      if (!best) best = [L, T];
-      if (!onB && !nearP) { best = [L, T]; break; }
-    }
-    curX = best[0] - bL; curY = best[1] - bT;
-    no.style.transform = 'translate(' + curX + 'px,' + curY + 'px)';
+    var pos = dodgePositions[(tries - 1) % dodgePositions.length];
+    var jx = pos.x + (Math.random() - 0.5) * 16;
+    var jy = pos.y + (Math.random() - 0.5) * 12;
+    var maxOffsetX = Math.max(40, Math.min(100, (window.innerWidth - 240) / 2));
+    jx = Math.max(-maxOffsetX, Math.min(maxOffsetX, jx));
+    no.style.transform = 'translate(' + jx.toFixed(1) + 'px, ' + jy.toFixed(1) + 'px)';
   }
+
   function surrender() {
-    gaveUp = true; justGaveUp = true;
-    setTimeout(function () { justGaveUp = false; }, 500);
-    no.style.transform = 'translate(0,0)';
-    no.classList.remove('dodging'); no.classList.add('surrendered');
-    no.textContent = 'Fine, I\u2019ll come \uD83C\uDF89';
-    taunt.textContent = 'The button gave up. See you Wednesday! \uD83E\uDEA4';
+    gaveUp = true;
+    no.style.transform = 'translate(0, 0)';
+    no.classList.remove('dodging');
+    no.classList.add('surrendered');
+    no.textContent = 'Fine, I\u2019ll be there! \uD83C\uDF89';
+    taunt.textContent = 'The button gave up! See you Wednesday! \uD83E\uDEA4';
     spawnConfetti();
+    launchRocket();
+    launchRocket();
   }
-  function attempt(px, py) {
-    if (gaveUp) return; tries++;
-    if (tries > lines.length) { surrender(); return; }
-    taunt.textContent = lines[tries - 1]; runAway(px, py);
-    yesBtn.classList.remove('nudge'); void yesBtn.offsetWidth; yesBtn.classList.add('nudge');
+
+  function attempt(e) {
+    if (gaveUp) return;
+    if (e && e.cancelable) e.preventDefault();
+    tries++;
+    if (tries >= 6) {
+      surrender();
+      return;
+    }
+    taunt.textContent = lines[(tries - 1) % lines.length];
+    runAway();
+    yesBtn.classList.remove('nudge');
+    void yesBtn.offsetWidth;
+    yesBtn.classList.add('nudge');
   }
-  no.addEventListener('pointerenter', function (e) { if (e.pointerType === 'mouse') attempt(e.clientX, e.clientY); });
-  no.addEventListener('pointerdown', function (e) { attempt(e.clientX, e.clientY); });
+
+  no.addEventListener('pointerenter', function (e) {
+    if (e.pointerType === 'mouse' && !gaveUp) {
+      attempt(e);
+    }
+  });
+
   no.addEventListener('click', function (e) {
-    e.preventDefault(); if (justGaveUp) return;
-    if (gaveUp) { window.open(yesBtn.href, '_blank', 'noopener'); return; }
-    if (e.detail === 0) attempt();
+    if (gaveUp) {
+      window.location.href = yesBtn.href;
+      return;
+    }
+    attempt(e);
   });
 
   /* ================================================================
