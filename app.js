@@ -287,10 +287,9 @@
     }
   }
 
-  if (heroDiya) {
-    heroDiya.addEventListener('pointerdown', function (e) {
-      e.preventDefault();
-    });
+  if (heroArt) {
+    heroArt.addEventListener('click', kindleDiya);
+  } else if (heroDiya) {
     heroDiya.addEventListener('click', kindleDiya);
   }
 
