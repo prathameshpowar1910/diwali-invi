@@ -303,54 +303,42 @@
   tick(); setInterval(tick, 1000);
 
   /* ================================================================
-     AMBIENT MUSIC (Web Audio API — pentatonic chimes + drone)
+     BACKGROUND FESTIVE MUSIC (music.mp3)
   ================================================================ */
-  var audioCtx = null, musicPlaying = false, chimeSched = null, droneNodes = [];
   var musicBtn = document.getElementById('music-btn');
   var iconPlay = document.getElementById('music-icon-play'), iconPause = document.getElementById('music-icon-pause');
-  var NOTES = [261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25, 783.99, 880];
+  var audio = new Audio('music.mp3');
+  audio.loop = true;
+  audio.preload = 'auto';
 
-  function startAudio() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    [65.41, 98, 130.81].forEach(function (freq) {
-      var osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-      osc.type = 'sine'; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.012, audioCtx.currentTime);
-      osc.connect(gain); gain.connect(audioCtx.destination); osc.start();
-      droneNodes.push({ osc: osc, gain: gain });
+  function playAudio() {
+    audio.play().then(function () {
+      musicBtn.classList.add('playing');
+      iconPlay.style.display = 'none';
+      iconPause.style.display = '';
+    }).catch(function (err) {
+      console.warn('Audio playback error:', err);
     });
-    function playChime() {
-      if (!musicPlaying) return;
-      var freq = NOTES[Math.floor(Math.random() * NOTES.length)];
-      var osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-      osc.type = 'sine'; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0, audioCtx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.07, audioCtx.currentTime + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 2.5);
-      osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 2.6);
-      if (Math.random() < 0.4) {
-        var o2 = audioCtx.createOscillator(), g2 = audioCtx.createGain();
-        o2.type = 'sine'; o2.frequency.setValueAtTime(freq * 1.5, audioCtx.currentTime);
-        g2.gain.setValueAtTime(0, audioCtx.currentTime);
-        g2.gain.linearRampToValueAtTime(0.035, audioCtx.currentTime + 0.02);
-        g2.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 2);
-        o2.connect(g2); g2.connect(audioCtx.destination); o2.start(); o2.stop(audioCtx.currentTime + 2.1);
-      }
-      chimeSched = setTimeout(playChime, 900 + Math.random() * 2400);
-    }
-    playChime();
   }
+
   function stopAudio() {
-    clearTimeout(chimeSched);
-    droneNodes.forEach(function (n) {
-      try { n.gain.gain.setValueAtTime(n.gain.gain.value, audioCtx.currentTime); n.gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5); n.osc.stop(audioCtx.currentTime + 0.6); } catch (e) {}
-    });
-    droneNodes = [];
+    audio.pause();
+    musicBtn.classList.remove('playing');
+    iconPlay.style.display = '';
+    iconPause.style.display = 'none';
   }
-  musicBtn.addEventListener('click', function () {
-    musicPlaying = !musicPlaying;
-    if (musicPlaying) { startAudio(); musicBtn.classList.add('playing'); iconPlay.style.display = 'none'; iconPause.style.display = ''; }
-    else { stopAudio(); musicBtn.classList.remove('playing'); iconPlay.style.display = ''; iconPause.style.display = 'none'; }
+
+  if (musicBtn) {
+    musicBtn.addEventListener('click', function () {
+      if (audio.paused) {
+        playAudio();
+      } else {
+        stopAudio();
+      }
+    });
+  }
+
+  audio.addEventListener('ended', function () {
+    stopAudio();
   });
 })();
